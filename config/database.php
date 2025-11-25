@@ -15,7 +15,7 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-    echo "Polączenie udane!";
+    //echo "Polączenie udane!";
 } catch (\PDOException $e) {
     die("Bląd polączenia z baza: " . $e->getMessage());
 }

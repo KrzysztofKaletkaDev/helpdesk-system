@@ -33,7 +33,55 @@
                             </div>
                         <?php endif; ?>
 
-                        <button class="btn btn-primary btn-lg mt-3">Zgłoś nowy problem</button>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Lista zgłoszeń</h3>
+            <a href="/helpdesk/create-ticket" class="btn btn-success">+ Nowe zgłoszenie</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Temat</th>
+                        <th>Status</th>
+                        <th>Priorytet</th>
+                        <th>Zgłaszający</th>
+                        <th>Data</th>
+                        <th>Akcja</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($tickets)): ?>
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                Brak zgłoszeń w systemie.
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($tickets as $ticket): ?>
+                            <tr>
+                                <td>#<?php echo $ticket['id']; ?></td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($ticket['title']); ?></strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <?php echo htmlspecialchars($ticket['status_name']); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($ticket['priority_name']); ?></td>
+                                <td><?php echo htmlspecialchars($ticket['author_name']); ?></td>
+                                <td><?php echo $ticket['created_at']; ?></td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-primary">Podgląd</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
                     </div>
                 </div>
             </div>
