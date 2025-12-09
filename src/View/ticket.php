@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Zgłoszenie #<?php echo $ticket['id']; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+    <a href="/helpdesk/dashboard" class="btn btn-outline-secondary mb-3">&larr; Wróć do listy</a>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        #<?php echo $ticket['id']; ?>: <?php echo htmlspecialchars($ticket['title']); ?>
+                    </h4>
+                    <span class="badge bg-primary"><?php echo htmlspecialchars($ticket['status_name']); ?></span>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">Opis problemu:</h6>
+                    <p class="card-text p-3 bg-light border rounded">
+                        <?php echo nl2br(htmlspecialchars($ticket['description'])); ?>
+                    </p>
+                </div>
+                <div class="card-footer text-muted font-monospace" style="font-size: 0.9em;">
+                    Zgłoszono: <?php echo $ticket['created_at']; ?> | 
+                    Autor: <?php echo htmlspecialchars($ticket['author_name']); ?> (<?php echo htmlspecialchars($ticket['author_email']); ?>)
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">Informacje</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Priorytet:</span>
+                        <strong><?php echo htmlspecialchars($ticket['priority_name']); ?></strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Kategoria:</span>
+                        <strong><?php echo htmlspecialchars($ticket['category_name']); ?></strong>
+                    </li>
+                </ul>
+                
+                <?php if ($_SESSION['role'] !== 'USER'): ?>
+                <div class="card-body border-top">
+                    <h6>Zarządzaj zgłoszeniem</h6>
+                    <form action="/helpdesk/update-ticket-status" method="POST">
+                        <input type="hidden" name="ticket_id" value="<?php echo $ticket['id']; ?>">
+                        <select name="status_id" class="form-select mb-2">
+                            <?php foreach ($all_statuses as $status): ?>
+                                <option 
+                                    value="<?php echo $status['id']; ?>"
+                                    <?php echo ($status['id'] == $ticket['status_id']) ? 'selected' : ''; ?>
+                                >
+                                    <?php echo htmlspecialchars($status['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="btn btn-warning w-100">Zmień status</button>
+                    </form>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

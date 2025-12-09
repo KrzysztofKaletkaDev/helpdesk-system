@@ -74,7 +74,7 @@
                                 <td><?php echo htmlspecialchars($ticket['author_name']); ?></td>
                                 <td><?php echo $ticket['created_at']; ?></td>
                                 <td>
-                                    <a href="#" class="btn btn-sm btn-primary">Podgląd</a>
+                                    <a href="/helpdesk/ticket?id=<?php echo $ticket['id']; ?>" class="btn btn-sm btn-primary">Podgląd</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

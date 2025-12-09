@@ -12,6 +12,8 @@ switch ($path) {
     case '':
         header('Location: ' . $base_path . '/login');
         exit;
+
+
     case '/login':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require __DIR__ . '/../config/database.php';
@@ -34,6 +36,8 @@ switch ($path) {
         }
         require __DIR__ . '/../src/View/login.php';
         break;
+
+
     case '/dashboard':
         if (!isset($_SESSION['user_id'])) {
             header('Location: ' . $base_path . '/login');
@@ -63,6 +67,8 @@ switch ($path) {
         $tickets = $stmt->fetchAll();
         require __DIR__ . '/../src/View/dashboard.php';
         break;
+
+
     case '/create-ticket':
         if (!isset($_SESSION['user_id'])) {
             header('Location: ' . $base_path . '/login');
@@ -96,6 +102,76 @@ switch ($path) {
         }
         require __DIR__ . '/../src/View/create_ticket.php';
         break;
+
+
+    case '/ticket':
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: ' . $base_path . '/login');
+            exit;
+        }
+        $ticket_id = $_GET['id'] ?? null;
+        if (!$ticket_id) {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+        $sql = "SELECT tickets.*,
+                       statuses.name as status_name,
+                       priorities.name as priority_name,
+                       categories.name as category_name,
+                       users.name as author_name,
+                       users.email as author_email
+                FROM tickets
+                LEFT JOIN statuses ON tickets.status_id = statuses.id
+                LEFT JOIN priorities ON tickets.priority_id = priorities.id
+                LEFT JOIN categories ON tickets.category_id = categories.id
+                LEFT JOIN users ON tickets.user_id = users.id
+                WHERE tickets.id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $ticket_id]);
+        $ticket = $stmt->fetch();
+
+        if (!$ticket) {
+            die("Zgłoszenie nie istnieje.");
+        }
+        $stmt_statuses = $pdo->query("SELECT * FROM statuses");
+        $all_statuses = $stmt_statuses->fetchAll();
+        #AUTORYZACJA
+        if ($_SESSION['role'] === 'USER' && $ticket['user_id'] != $_SESSION['user_id']) {
+            http_response_code(403);
+            die("<h1>Brak dostępu</h1><p>To nie jest Twoje zgłoszenie.</p>");
+        }
+        require __DIR__ . '/../src/View/ticket.php';
+        break;
+
+
+    case '/update-ticket-status';
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+
+        $ticket_id = $_POST['ticket_id'];
+        $new_status_id = $_POST['status_id'];
+        // Sprawdzamy, czy użytkownik to ADMIN lub OPERATOR.
+        // Zwykły USER nie ma prawa tu wejść, nawet jeśli spreparuje żądanie POST.
+        if (!isset($_SESSION['role']) || $_SESSION['role'] === 'USER') {
+            die("Brak uprawnień do zmiany statusu.");
+        }
+        require __DIR__ . '/../config/database.php';
+        // SQL Update
+        $sql = "UPDATE tickets SET status_id = :status WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':status' => $new_status_id,
+            ':id' => $ticket_id
+        ]);
+        header('Location: ' . $base_path . '/ticket?id=' . $ticket_id);
+        exit;
+        break;
+
+
     case '/logout':
         session_destroy();
         header('Location: ' . $base_path . '/login');
