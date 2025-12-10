@@ -25,21 +25,25 @@
 
                         <div class="mb-3">
                             <label class="form-label">Kategoria</label>
-                            <select name="category_id" class="form-select">
-                                <option value="1">Sprzęt</option>
-                                <option value="2">Oprogramowanie</option>
-                                <option value="3">Dostęp / Konta</option>
-                            </select>
-                        </div>
+                                <select name="category_id" class="form-select">
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?php echo $category['id']; ?>">
+                                            <?php echo htmlspecialchars($category['name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
 
                         <div class="mb-3">
                             <label class="form-label">Priorytet</label>
                             <select name="priority_id" class="form-select">
-                                <option value="1">Niski</option>
-                                <option value="2">Średni</option>
-                                <option value="3">Wysoki</option>
+                                <?php foreach ($priorities as $priority): ?>
+                                    <option value="<?php echo $priority['id']; ?>">
+                                        <?php echo htmlspecialchars($priority['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
-                        </div>
+                        </div> 
 
                         <div class="mb-3">
                             <label class="form-label">Opis problemu</label>

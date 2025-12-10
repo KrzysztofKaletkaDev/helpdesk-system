@@ -100,6 +100,15 @@ switch ($path) {
             header('Location: ' . $base_path . '/dashboard');
             exit;
         }
+
+            require __DIR__ . '/../config/database.php';
+            // Pobieranie kategorii i priorytetów
+            $stmt_cats = $pdo->query("SELECT * FROM categories");
+            $categories = $stmt_cats->fetchAll();
+
+            $stmt_prio = $pdo->query("SELECT * FROM priorities");
+            $priorities = $stmt_prio->fetchAll();
+
         require __DIR__ . '/../src/View/create_ticket.php';
         break;
 
