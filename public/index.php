@@ -20,13 +20,18 @@ switch ($path) {
             $email = $_POST['email'];
             $password = $_POST['password'];
 
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email");
+            
+            $sql = "SELECT users.*, roles.name as role_name
+                    FROM users
+                    LEFT JOIN roles ON users.role_id = roles.id
+                    WHERE email = :email";
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([':email' => $email]);
             $user = $stmt->fetch();
 
             if ($user && password_verify($password, $user['password_hash'])) {
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['role'] = $user['role'];
+                $_SESSION['role'] = $user['role_name'];
                 $_SESSION['name'] = $user['name'];
                 header('Location: ' . $base_path . '/dashboard');
                 exit;
@@ -149,9 +154,10 @@ switch ($path) {
         $all_statuses = $stmt_statuses->fetchAll();
         // Pobranie komentarzy
 
-        $sql_comments = "SELECT comments.*, users.name as author_name, users.role as author_role
+        $sql_comments = "SELECT comments.*, users.name as author_name, roles.name as author_role
                          FROM comments
                          LEFT JOIN users ON comments.user_id = users.id
+                         LEFT JOIN roles ON users.role_id = roles.id
                          WHERE ticket_id = :id
                          ORDER BY comments.created_at ASC";
 
@@ -220,6 +226,137 @@ switch ($path) {
             ':user_id' => $user_id
         ]);
         header('Location: ' . $base_path . '/ticket?id=' . $ticket_id);
+        exit;
+        break;
+
+    
+    case '/admin/users':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') {
+            die("Brak dostępu. Tylko dla administratora.");
+        }
+
+        require __DIR__ . '/../config/database.php';
+
+        $sql = "SELECT users.*, roles.name as role_name, departments.name as dept_name
+                FROM users
+                LEFT JOIN roles ON users.role_id = roles.id
+                LEFT JOIN departments ON users.department_id = departments.id
+                ORDER BY users.id ASC";
+        $stmt = $pdo->query($sql);
+        $users = $stmt->fetchAll();
+        require __DIR__ . '/../src/View/admin_users.php';
+        break;
+
+
+    case '/admin/users/edit':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') {
+            die("Brak dostępu.");
+        }
+
+        $user_id = $_GET['id'] ?? null;
+        if (!$user_id) {
+            header('Location: ' . $base_path . '/admin/users');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+        $stmt->execute([':id' => $user_id]);
+        $user_to_edit = $stmt->fetch();
+
+        if (!$user_to_edit) {
+            die("Użytkownik nie istnieje.");
+        }
+
+        $stmt_roles = $pdo->query("SELECT * FROM roles");
+        $roles = $stmt_roles->fetchAll();
+
+        $stmt_dept = $pdo->query("SELECT * FROM departments");
+        $departments = $stmt_dept->fetchAll();
+
+        require __DIR__ . '/../src/View/admin_users_edit.php';
+        break;
+
+
+    case '/admin/users/create':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') {
+            die("Brak dostępu.");
+        }
+
+        require __DIR__ . '/../config/database.php';
+
+        $stmt = $pdo->query("SELECT * FROM roles");
+        $roles = $stmt->fetchAll();
+
+        $stmt_dept = $pdo->query("SELECT * FROM departments");
+        $departments = $stmt_dept->fetchAll();
+
+        require __DIR__ . '/../src/View/admin_users_create.php';
+        break;
+
+    
+    case '/admin/users/store':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $_SESSION['role'] !== 'ADMIN') {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+        require __DIR__ . '/../config/database.php';
+        $name = $_POST['name'];
+        $email = $_POST['email'];
+        $role_id = $_POST['role_id'];
+        $department_id = $_POST['department_id'];
+        $raw_password = $_POST['password'];
+
+        $password_hash = password_hash($raw_password, PASSWORD_DEFAULT);
+
+        $sql = "INSERT INTO users (name, email, password_hash, role_id, department_id) 
+                VALUES (:name, :email, :hash, :role, :dept)";
+        
+        $stmt = $pdo->prepare($sql);
+        try {
+            $stmt->execute([
+                ':name' => $name,
+                ':email' => $email,
+                ':hash' => $password_hash,
+                ':role' => $role_id,
+                ':dept' => $department_id
+            ]);
+        } catch (PDOException $e) {
+            die("Błąd: Taki email już istnieje lub inny problem z bazą.");
+        }
+
+        header('Location: ' . $base_path . '/admin/users');
+        exit;
+        break;
+
+
+    case '/admin/users/update':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $_SESSION['role'] !== 'ADMIN') {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+
+        $id = $_POST['id'];
+        $name = $_POST['name'];
+        $email = $_POST['email'];
+        $role_id = $_POST['role_id'];
+        $department_id = $_POST['department_id'];
+
+        $sql = "UPDATE users SET name = :name, email = :email, role_id = :role, department_id = :dept WHERE id = :id";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':name' => $name,
+            ':email' => $email,
+            ':role' => $role_id,
+            ':dept' => $department_id,
+            ':id' => $id
+        ]);
+
+        header('Location: ' . $base_path . '/admin/users');
         exit;
         break;
 
