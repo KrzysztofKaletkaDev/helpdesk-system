@@ -131,12 +131,28 @@ switch ($path) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $ticket_id]);
         $ticket = $stmt->fetch();
+        // Pobranie statusów
 
         if (!$ticket) {
             die("Zgłoszenie nie istnieje.");
         }
         $stmt_statuses = $pdo->query("SELECT * FROM statuses");
         $all_statuses = $stmt_statuses->fetchAll();
+        // Pobranie komentarzy
+
+        $sql_comments = "SELECT comments.*, users.name as author_name, users.role as author_role
+                         FROM comments
+                         LEFT JOIN users ON comments.user_id = users.id
+                         WHERE ticket_id = :id
+                         ORDER BY comments.created_at ASC";
+
+        $stmt_comments = $pdo->prepare($sql_comments);
+        $stmt_comments->execute([':id' => $ticket_id]);
+        $comments = $stmt_comments->fetchAll();
+
+        require __DIR__ . '/../src/View/ticket.php';
+        break;
+
         #AUTORYZACJA
         if ($_SESSION['role'] === 'USER' && $ticket['user_id'] != $_SESSION['user_id']) {
             http_response_code(403);
@@ -166,6 +182,33 @@ switch ($path) {
         $stmt->execute([
             ':status' => $new_status_id,
             ':id' => $ticket_id
+        ]);
+        header('Location: ' . $base_path . '/ticket?id=' . $ticket_id);
+        exit;
+        break;
+
+    case '/add-comment':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+        if (!isset($_SESSION['user_id'])) {
+            die("Brak dostępu.");
+        }
+        require __DIR__ . '/../config/database.php';
+
+        $ticket_id = $_POST['ticket_id'];
+        $content = $_POST['content'];
+        $user_id = $_SESSION['user_id'];
+        // Zapisywanie komentarza
+        $sql = "INSERT INTO comments (content, ticket_id, user_id, created_at)
+                VALUES (:content, :ticket_id, :user_id, NOW())";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':content' => $content,
+            ':ticket_id' => $ticket_id,
+            ':user_id' => $user_id
         ]);
         header('Location: ' . $base_path . '/ticket?id=' . $ticket_id);
         exit;

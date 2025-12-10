@@ -25,6 +25,41 @@
                         <?php echo nl2br(htmlspecialchars($ticket['description'])); ?>
                     </p>
                 </div>
+                <h5 class="mt-4 mb-3">Dyskusja</h5>
+
+            <?php foreach ($comments as $comment): ?>
+                <div class="card mb-3 <?php echo ($comment['author_role'] === 'ADMIN') ? 'border-primary' : ''; ?>">
+                    <div class="card-header d-flex justify-content-between text-muted" style="font-size: 0.85em;">
+                        <span>
+                            <strong><?php echo htmlspecialchars($comment['author_name']); ?></strong>
+                            (<?php echo $comment['author_role']; ?>)
+                        </span>
+                        <span><?php echo $comment['created_at']; ?></span>
+                    </div>
+                    <div class="card-body py-2">
+                        <p class="card-text mb-0">
+                            <?php echo nl2br(htmlspecialchars($comment['content'])); ?>
+                        </p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
+            <?php if (empty($comments)): ?>
+                <p class="text-muted fst-italic">Brak komentarzy. Rozpocznij dyskusję.</p>
+            <?php endif; ?>
+
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <form action="/helpdesk/add-comment" method="POST">
+                        <input type="hidden" name="ticket_id" value="<?php echo $ticket['id']; ?>">
+                        <div class="mb-3">
+                            <label class="form-label">Dodaj odpowiedź</label>
+                            <textarea name="content" class="form-control" rows="3" required placeholder="Wpisz treść..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary float-end">Wyślij odpowiedź</button>
+                    </form>
+                </div>
+            </div>
                 <div class="card-footer text-muted font-monospace" style="font-size: 0.9em;">
                     Zgłoszono: <?php echo $ticket['created_at']; ?> | 
                     Autor: <?php echo htmlspecialchars($ticket['author_name']); ?> (<?php echo htmlspecialchars($ticket['author_email']); ?>)
