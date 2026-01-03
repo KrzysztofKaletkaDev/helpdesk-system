@@ -380,6 +380,35 @@ switch ($path) {
         break;
 
 
+    case '/admin/categories/delete':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $_SESSION['role'] !== 'ADMIN') {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+        $id = $_POST['id'];
+
+        try {
+            $stmt = $pdo->prepare("DELETE FROM categories WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            header('Location: ' . $base_path . '/admin/categories');
+            exit;
+        } catch (PDOException $e) {
+        // Kod 23000 = Naruszenie więzów integralności (kategoria jest używana)
+            if ($e->getCode() == '23000') {
+                die("<div class='container mt-5'><div class='alert alert-danger text-center'>
+                            <h4>Nie można usunąć tej kategorii!</h4>
+                            <p>Jest ona przypisana do istniejących zgłoszeń.</p>
+                            <a href='$base_path/admin/categories' class='btn btn-secondary'>Wróć</a>
+                        </div></div>");
+            } else {
+                die("Błąd bazy danych: " . $e->getMessage());
+            }
+        }
+        break;
+
+
     case '/logout':
         session_destroy();
         header('Location: ' . $base_path . '/login');

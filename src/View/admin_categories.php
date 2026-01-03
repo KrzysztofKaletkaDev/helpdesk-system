@@ -28,6 +28,13 @@
                                 <tr>
                                     <td><?php echo $cat['id']; ?></td>
                                     <td><?php echo htmlspecialchars($cat['name']); ?></td>
+                                    <td>
+                                        <form action="/helpdesk/admin/categories/delete" method="POST" 
+                                            onsubmit="return confirm('Czy na pewno chcesz usunąć?');" style="display:inline;">
+                                            <input type="hidden" name="id" value="<?php echo $cat['id']; ?>">
+                                            <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
+                                        </form>
+                                    </td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
