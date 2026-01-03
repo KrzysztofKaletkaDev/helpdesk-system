@@ -145,10 +145,14 @@ switch ($path) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $ticket_id]);
         $ticket = $stmt->fetch();
-        // Pobranie statusów
 
         if (!$ticket) {
             die("Zgłoszenie nie istnieje.");
+        }
+
+         if ($_SESSION['role'] === 'USER' && $ticket['user_id'] != $_SESSION['user_id']) {
+            http_response_code(403);
+            die("<h1>Brak dostępu</h1><p>To nie jest Twoje zgłoszenie.</p>");
         }
         $stmt_statuses = $pdo->query("SELECT * FROM statuses");
         $all_statuses = $stmt_statuses->fetchAll();
@@ -165,14 +169,6 @@ switch ($path) {
         $stmt_comments->execute([':id' => $ticket_id]);
         $comments = $stmt_comments->fetchAll();
 
-        require __DIR__ . '/../src/View/ticket.php';
-        break;
-
-        #AUTORYZACJA
-        if ($_SESSION['role'] === 'USER' && $ticket['user_id'] != $_SESSION['user_id']) {
-            http_response_code(403);
-            die("<h1>Brak dostępu</h1><p>To nie jest Twoje zgłoszenie.</p>");
-        }
         require __DIR__ . '/../src/View/ticket.php';
         break;
 
@@ -358,6 +354,29 @@ switch ($path) {
 
         header('Location: ' . $base_path . '/admin/users');
         exit;
+        break;
+
+    case '/admin/categories':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') {
+            die("Brak dostępu.");
+        }
+
+        require __DIR__ . '/../config/database.php';
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name = $_POST['name'];
+            if (!empty($name)) {
+                $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (:name)");
+                $stmt->execute([':name' => $name]);
+                header('Location: ' . $base_path . '/admin/categories');
+                exit;
+            }
+        }
+
+        $stmt = $pdo->query("SELECT * FROM categories ORDER BY id ASC");
+        $categories = $stmt->fetchAll();
+
+        require __DIR__ . '/../src/View/admin_categories.php';
         break;
 
 

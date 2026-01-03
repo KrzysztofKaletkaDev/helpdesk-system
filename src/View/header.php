@@ -21,7 +21,7 @@
                         <li><a class="dropdown-item" href="/helpdesk/admin/users">Użytkownicy</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><h6 class="dropdown-header">Słowniki</h6></li>
-                        <li><a class="dropdown-item" href="#">Kategorie (Wkrótce)</a></li>
+                        <li><a class="dropdown-item" href="/helpdesk/admin/categories">Kategorie</a></li>
                         <li><a class="dropdown-item" href="#">Statusy (Wkrótce)</a></li>
                     </ul>
                 </li>
