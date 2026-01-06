@@ -340,20 +340,56 @@ switch ($path) {
         $email = $_POST['email'];
         $role_id = $_POST['role_id'];
         $department_id = $_POST['department_id'];
+        $new_password = $_POST['new_password'];
 
-        $sql = "UPDATE users SET name = :name, email = :email, role_id = :role, department_id = :dept WHERE id = :id";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':name' => $name,
-            ':email' => $email,
-            ':role' => $role_id,
-            ':dept' => $department_id,
-            ':id' => $id
-        ]);
+        try {
+            if (!empty($new_password)) {
+                $password_hash = password_hash($new_password, PASSWORD_DEFAULT);
+                
+                $sql = "UPDATE users 
+                        SET name = :name, email = :email, role_id = :role, department_id = :dept, password_hash = :hash 
+                        WHERE id = :id";
+                
+                $params = [
+                    ':name' => $name,
+                    ':email' => $email,
+                    ':role' => $role_id,
+                    ':dept' => $department_id,
+                    ':hash' => $password_hash,
+                    ':id' => $id
+                ];
+            } else {
+                $sql = "UPDATE users 
+                        SET name = :name, email = :email, role_id = :role, department_id = :dept 
+                        WHERE id = :id";
+                
+                $params = [
+                    ':name' => $name,
+                    ':email' => $email,
+                    ':role' => $role_id,
+                    ':dept' => $department_id,
+                    ':id' => $id
+                ];
+            }
 
-        header('Location: ' . $base_path . '/admin/users');
-        exit;
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+
+            header('Location: ' . $base_path . '/admin/users');
+            exit;
+
+        } catch (PDOException $e) {
+            if ($e->getCode() == '23000') {
+                echo '<div style="max-width:600px; margin:50px auto; padding:20px; border:1px solid #dc3545; background:#f8d7da; color:#721c24; text-align:center; font-family:sans-serif; border-radius:5px;">';
+                echo '<h3>⛔ Błąd edycji!</h3>';
+                echo '<p>Adres email <strong>' . htmlspecialchars($email) . '</strong> jest już zajęty.</p>';
+                echo '<button onclick="history.back()" style="padding:10px 20px; background:#dc3545; color:white; border:none; cursor:pointer; border-radius:5px;">Wróć i popraw</button>';
+                echo '</div>';
+                exit;
+            } else {
+                die("Błąd bazy danych: " . $e->getMessage());
+            }
+        }
         break;
 
     case '/admin/categories':

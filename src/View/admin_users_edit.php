@@ -31,6 +31,12 @@
                                    value="<?php echo htmlspecialchars($user_to_edit['email']); ?>" required>
                         </div>
 
+                        <div class="mb-3 border p-3 rounded bg-white">
+                            <label class="form-label text-danger fw-bold">Reset hasła</label>
+                            <input type="password" name="new_password" class="form-control" placeholder="Wpisz nowe hasło (zostaw puste, aby nie zmieniać)">
+                            <div class="form-text">Wypełnij to pole TYLKO jeśli chcesz zmienić hasło pracownikowi.</div>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label">Stanowisko / Rola</label>
                             <select name="role_id" class="form-select">
