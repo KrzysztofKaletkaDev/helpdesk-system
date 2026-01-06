@@ -445,6 +445,44 @@ switch ($path) {
         break;
 
 
+    case '/change-password':
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: ' . $base_path . '/login');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+        $error = null;
+        $success = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $current_password = $_POST['current_password'];
+            $new_password = $_POST['new_password'];
+            $user_id = $_SESSION['user_id'];
+
+            $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :id");
+            $stmt->execute([':id' => $user_id]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($current_password, $user['password_hash'])) {
+                $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+
+                $update = $pdo->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+                $update->execute([
+                    ':hash' => $new_hash,
+                    ':id' => $user_id
+                ]);
+                $success = "Hasło zostało zmienione pomyślnie!";
+
+            } else {
+                $error = "Podane aktualne hasło jest nieprawidołowe.";
+            }
+        }
+
+        require __DIR__ . '/../src/View/change_password.php';
+        break;
+
+
     case '/logout':
         session_destroy();
         header('Location: ' . $base_path . '/login');

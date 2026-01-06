@@ -33,6 +33,9 @@
                     <?php echo $_SESSION['name'] ?? 'Gość'; ?> 
                     (<?php echo $_SESSION['role'] ?? '-'; ?>)
                 </span>
+
+                <a href="/helpdesk/change-password" class="btn btn-outline-light btn-sm me-2">Hasło</a>
+
                 <a href="/helpdesk/logout" class="btn btn-outline-light btn-sm">Wyloguj</a>
             </div>
         </div>
