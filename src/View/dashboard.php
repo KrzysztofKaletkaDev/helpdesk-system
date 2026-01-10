@@ -36,6 +36,7 @@
                         <th>Temat</th>
                         <th>Status</th>
                         <th>Priorytet</th>
+                        <th>Operator</th>
                         <th>Zgłaszający</th>
                         <th>Data</th>
                         <th>Akcja</th>
@@ -61,6 +62,15 @@
                                     </span>
                                 </td>
                                 <td><?php echo htmlspecialchars($ticket['priority_name']); ?></td>
+                                <td>
+                                    <?php if (!empty($ticket['operator_name'])): ?>
+                                        <span class="badge bg-info text-dark">
+                                            👤 <?php echo htmlspecialchars($ticket['operator_name']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">Do wzięcia</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($ticket['author_name']); ?></td>
                                 <td><?php echo $ticket['created_at']; ?></td>
                                 <td>

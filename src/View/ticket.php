@@ -99,6 +99,11 @@
                         <button type="submit" class="btn btn-warning w-100">Zmień status</button>
                     </form>
                 </div>
+                <div class="card-body border-bottom">
+                    <a href="/helpdesk/edit-ticket?id=<?php echo $ticket['id']; ?>" class="btn btn-outline-primary w-100">
+                        ✏️ Edytuj / Przypisz
+                    </a>
+                </div>
                 <?php endif; ?>
             </div>
         </div>

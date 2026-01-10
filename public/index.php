@@ -53,18 +53,27 @@ switch ($path) {
         $sql = "SELECT tickets.*,
                         statuses.name as status_name,
                         priorities.name as priority_name,
-                        users.name as author_name
+                        authors.name as author_name,
+                        operators.name as operator_name 
                 FROM tickets
                 LEFT JOIN statuses ON tickets.status_id = statuses.id
                 LEFT JOIN priorities ON tickets.priority_id = priorities.id
-                LEFT JOIN users ON tickets.user_id = users.id";
+                LEFT JOIN users as authors ON tickets.user_id = authors.id
+                LEFT JOIN users as operators ON tickets.operator_id = operators.id";
+
         if ($_SESSION['role'] === 'USER') {
-            $sql .= " WHERE tickets.user_id = :user_id";
+            $sql .= " WHERE tickets.user_id = :id";
+        } 
+        elseif ($_SESSION['role'] === 'OPERATOR') {
+            $sql .= " WHERE tickets.operator_id = :id OR tickets.operator_id IS NULL";
         }
+
         $sql .= " ORDER BY tickets.created_at DESC";
+
         $stmt = $pdo->prepare($sql);
-        if ($_SESSION['role'] === 'USER') {
-            $stmt->execute([':user_id' => $_SESSION['user_id']]);
+        
+        if ($_SESSION['role'] === 'USER' || $_SESSION['role'] === 'OPERATOR') {
+            $stmt->execute([':id' => $_SESSION['user_id']]);
         } else {
             $stmt->execute();
         }
@@ -116,7 +125,64 @@ switch ($path) {
 
         require __DIR__ . '/../src/View/create_ticket.php';
         break;
+    
 
+    case '/edit-ticket':
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: ' . $base_path . '/login');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+
+        $ticket_id = $_GET['id'] ?? $_POST['id'] ?? null;
+        if (!$ticket_id) { die("Brak ID zgłoszenia."); }
+
+        $stmt = $pdo->prepare("SELECT * FROM tickets Where id = :id");
+        $stmt->execute([':id' => $ticket_id]);
+        $ticket = $stmt->fetch();
+
+        if (!$ticket) { die("Zgłoszenie nie istnieje."); }
+
+        $is_admin_or_op = in_array($_SESSION['role'], ['ADMIN', 'OPERATOR']);
+        if (!$is_admin_or_op && $ticket['user_id'] != $_SESSION['user_id']) {
+            die("Brak uprawnień.");
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $title = $_POST['title'];
+            $description = $_POST['description'];
+            $category_id = $_POST['category_id'];
+            $priority_id = $_POST['priority_id'];
+            $operator_id = $ticket['operator_id'];
+
+            if ($_SESSION['role'] === 'ADMIN' && isset($_POST['operator_id'])) {
+                $operator_id = $_POST['operator_id'] ?: null;
+            }
+
+            $sql = "UPDATE tickets SET
+                    title = :title, description = :desc,
+                    category_id = :cat, priority_id = :prio,
+                    operator_id = :op
+                    WHERE id = :id";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':title' => $title, ':desc' => $description,
+                ':cat' => $category_id, ':prio' => $priority_id,
+                ':op' => $operator_id, ':id' => $ticket_id
+            ]);
+
+            header('Location: ' . $base_path . '/ticket?id=' . $ticket_id);
+            exit;
+        }
+
+        $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
+        $priorities = $pdo->query("SELECT * FROM priorities")->fetchAll();
+        $operators = $pdo->query("SELECT users.* FROM users LEFT JOIN roles ON users.role_id = roles.id WHERE roles.name IN ('ADMIN', 'OPERATOR')")->fetchAll();
+
+        require __DIR__ . '/../src/View/edit_ticket.php';
+        break;
 
     case '/ticket':
         if (!isset($_SESSION['user_id'])) {
