@@ -184,6 +184,37 @@ switch ($path) {
         require __DIR__ . '/../src/View/edit_ticket.php';
         break;
 
+
+    case '/delete-ticket':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
+            die("Brak uprawnień lub nieprawidłowa metoda.");
+        }
+
+        require __DIR__ . '/../config/database.php';
+        $ticket_id = $_POST['ticket_id'];
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt1 = $pdo->prepare("DELETE FROM comments WHERE ticket_id = :id");
+            $stmt1->execute([':id' => $ticket_id]);
+
+            $stmt2 = $pdo->prepare("DELETE FROM tickets WHERE id = :id");
+            $stmt2->execute([':id' => $ticket_id]);
+
+            $pdo->commit();
+            
+
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            die("Błąd podczas usuwania zgłoszenia: " . $e->getMessage());
+        }
+        break;
+
+
     case '/ticket':
         if (!isset($_SESSION['user_id'])) {
             header('Location: ' . $base_path . '/login');

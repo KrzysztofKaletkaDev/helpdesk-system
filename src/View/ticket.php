@@ -110,6 +110,26 @@
                         <button type="submit" class="btn btn-warning w-100">Zmień status</button>
                     </form>
                 </div>
+                <?php if ($_SESSION['role'] === 'ADMIN'): ?>
+                <div class="card mt-4 border-danger shadow-sm">
+                    <div class="card-header bg-danger text-white small">
+                        ⚠️ Strefa Administratora
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text small text-muted mb-2">
+                            Usunięcie zgłoszenia jest nieodwracalne.
+                        </p>
+                        
+                        <form action="/helpdesk/delete-ticket" method="POST" 
+                              onsubmit="return confirm('Jesteś pewien? To usunie zgłoszenie ORAZ wszystkie komentarze!');">
+                            <input type="hidden" name="ticket_id" value="<?php echo $ticket['id']; ?>">
+                            <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                                🗑️ Usuń to zgłoszenie trwale
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <div class="card-body border-bottom">
                     <a href="/helpdesk/edit-ticket?id=<?php echo $ticket['id']; ?>" class="btn btn-outline-primary w-100">
                         ✏️ Edytuj / Przypisz
