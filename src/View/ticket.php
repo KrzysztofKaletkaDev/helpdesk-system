@@ -30,11 +30,22 @@
             <?php foreach ($comments as $comment): ?>
                 <div class="card mb-3 <?php echo ($comment['author_role'] === 'ADMIN') ? 'border-primary' : ''; ?>">
                     <div class="card-header d-flex justify-content-between text-muted" style="font-size: 0.85em;">
-                        <span>
+                        <div>
                             <strong><?php echo htmlspecialchars($comment['author_name']); ?></strong>
                             (<?php echo $comment['author_role']; ?>)
-                        </span>
-                        <span><?php echo $comment['created_at']; ?></span>
+                            <span class="ms-2"><?php echo $comment['created_at']; ?></span>
+                        </div>
+                        
+                        <?php if ($_SESSION['role'] === 'ADMIN' || $_SESSION['user_id'] == $comment['user_id']): ?>
+                        <div>
+                            <a href="/helpdesk/edit-comment?id=<?php echo $comment['id']; ?>" class="text-decoration-none text-primary me-2">Edytuj</a>
+                            
+                            <form action="/helpdesk/delete-comment" method="POST" style="display:inline;" onsubmit="return confirm('Usunąć komentarz?');">
+                                <input type="hidden" name="comment_id" value="<?php echo $comment['id']; ?>">
+                                <button type="submit" class="btn btn-link p-0 text-danger text-decoration-none" style="font-size: 1em;">Usuń</button>
+                            </form>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body py-2">
                         <p class="card-text mb-0">

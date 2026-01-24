@@ -291,7 +291,71 @@ switch ($path) {
         exit;
         break;
 
-    
+        
+    case '/delete-comment':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['user_id'])) {
+            header('Location: ' . $base_path . '/dashboard');
+            exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+        $comment_id = $_POST['comment_id'];
+        
+        $stmt = $pdo->prepare("SELECT * FROM comments WHERE id = :id");
+        $stmt->execute([':id' => $comment_id]);
+        $comment = $stmt->fetch();
+
+        if (!$comment) { die("Komentarz nie istnieje."); }
+
+        if ($_SESSION['role'] === 'ADMIN' || $_SESSION['user_id'] == $comment['user_id']) {
+            $del = $pdo->prepare("DELETE FROM comments WHERE id = :id");
+            $del->execute([':id' => $comment_id]);
+        } else {
+            die("Brak uprawnień do usunięcia tego komentarza.");
+        }
+
+        header('Location: ' . $base_path . '/ticket?id=' . $comment['ticket_id']);
+        exit;
+        break;
+
+    case '/edit-comment':
+        if (!isset($_SESSION['user_id'])) { header('Location: ' . $base_path . '/login'); exit; }
+        
+        require __DIR__ . '/../config/database.php';
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $comment_id = $_POST['comment_id'];
+            $content = $_POST['content'];
+
+            $stmt = $pdo->prepare("SELECT user_id, ticket_id FROM comments WHERE id = :id");
+            $stmt->execute([':id' => $comment_id]);
+            $comment = $stmt->fetch();
+
+            if ($_SESSION['role'] === 'ADMIN' || $_SESSION['user_id'] == $comment['user_id']) {
+                $upd = $pdo->prepare("UPDATE comments SET content = :content WHERE id = :id");
+                $upd->execute([':content' => $content, ':id' => $comment_id]);
+                header('Location: ' . $base_path . '/ticket?id=' . $comment['ticket_id']);
+                exit;
+            } else {
+                die("Brak uprawnień.");
+            }
+        }
+
+        $comment_id = $_GET['id'];
+        $stmt = $pdo->prepare("SELECT * FROM comments WHERE id = :id");
+        $stmt->execute([':id' => $comment_id]);
+        $comment = $stmt->fetch();
+
+        if (!$comment) die("Brak komentarza");
+        
+        if ($_SESSION['role'] !== 'ADMIN' && $_SESSION['user_id'] != $comment['user_id']) {
+            die("Nie możesz edytować tego komentarza.");
+        }
+
+        require __DIR__ . '/../src/View/edit_comment.php';
+        break;
+
+
     case '/admin/users':
         if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') {
             die("Brak dostępu. Tylko dla administratora.");
