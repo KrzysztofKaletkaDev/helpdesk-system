@@ -49,7 +49,15 @@
                         </td>
                         <td><?php echo htmlspecialchars($user['dept_name']); ?></td>
                         <td>
-                            <a href="/helpdesk/admin/users/edit?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary">Edytuj</a>
+                            <div class="d-flex gap-2">
+                                <a href="/helpdesk/admin/users/edit?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary">Edytuj</a>
+                                
+                                <form action="/helpdesk/admin/users/delete" method="POST" 
+                                      onsubmit="return confirm('Czy na pewno zwolnić tego pracownika?');">
+                                    <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>

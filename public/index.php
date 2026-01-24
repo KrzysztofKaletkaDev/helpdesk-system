@@ -553,6 +553,35 @@ switch ($path) {
         }
         break;
 
+
+    case '/admin/users/delete':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $_SESSION['role'] !== 'ADMIN') {
+            header('Location: ' . $base_path . '/dashboard'); exit;
+        }
+
+        require __DIR__ . '/../config/database.php';
+        $id_to_delete = $_POST['id'];
+
+        // 1. Ochrona przed usunięciem samego siebie
+        if ($id_to_delete == $_SESSION['user_id']) {
+            die("Nie możesz usunąć własnego konta, gdy jesteś zalogowany!");
+        }
+
+        try {
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id");
+            $stmt->execute([':id' => $id_to_delete]);
+            header('Location: ' . $base_path . '/admin/users');
+        } catch (PDOException $e) {
+            // Kod 23000 to naruszenie więzów integralności (User ma zgłoszenia/komentarze)
+            if ($e->getCode() == '23000') {
+                die("<h3>Nie można usunąć tego pracownika!</h3><p>Posiada on historię w systemie (zgłoszenia, przypisania, komentarze).<br>Usunięcie go uszkodziłoby spójność danych.</p><a href='$base_path/admin/users'>Wróć</a>");
+            } else {
+                die("Błąd bazy danych: " . $e->getMessage());
+            }
+        }
+        break;
+
+
     // =========================================================
     // PEŁNY MODUŁ SŁOWNIKÓW (CRUD: Statusy, Departamenty, Priorytety, Kategorie)
     // =========================================================
