@@ -586,6 +586,76 @@ switch ($path) {
     // PEŁNY MODUŁ SŁOWNIKÓW (CRUD: Statusy, Departamenty, Priorytety, Kategorie)
     // =========================================================
 
+
+    case '/admin/roles':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        
+        // CREATE (Dodawanie)
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("INSERT INTO roles (name) VALUES (:name)");
+            $stmt->execute([':name' => $_POST['name']]);
+            header('Location: ' . $base_path . '/admin/roles'); exit;
+        }
+        
+        // READ (Lista)
+        $items = $pdo->query("SELECT * FROM roles ORDER BY id ASC")->fetchAll();
+        $dictionary_name = "Role Systemowe";
+        $base_url = "/helpdesk/admin/roles";
+        require __DIR__ . '/../src/View/admin_dictionary_template.php';
+        break;
+
+    case '/admin/roles/edit': // UPDATE
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        
+        // ⛔ ZABEZPIECZENIE: Nie pozwól edytować ról systemowych (zakładamy ID 1, 2, 3)
+        $id = $_REQUEST['id'];
+        if (in_array($id, [1, 2, 3])) {
+            die("<div class='container mt-5 alert alert-danger'>
+                    <h4>Błąd krytyczny!</h4>
+                    <p>Nie można edytować wbudowanych ról systemowych (ADMIN, USER, OPERATOR).</p>
+                    <p>Zmiana ich nazwy zablokowałaby dostęp do systemu.</p>
+                    <a href='$base_path/admin/roles' class='btn btn-secondary'>Wróć</a>
+                 </div>");
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("UPDATE roles SET name = :name WHERE id = :id");
+            $stmt->execute([':name' => $_POST['name'], ':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/roles'); exit;
+        }
+
+        $item = $pdo->prepare("SELECT * FROM roles WHERE id = :id");
+        $item->execute([':id' => $_GET['id']]);
+        $item = $item->fetch();
+        
+        $dictionary_name = "Role Systemowe";
+        $update_action = "/helpdesk/admin/roles/edit";
+        $back_link = "/helpdesk/admin/roles";
+        require __DIR__ . '/../src/View/admin_dictionary_edit.php';
+        break;
+
+    case '/admin/roles/delete': // DELETE
+        require __DIR__ . '/../config/database.php';
+        if ($_SESSION['role'] !== 'ADMIN') die('Brak uprawnień');
+        
+        $id = $_POST['id'];
+        
+        // ⛔ ZABEZPIECZENIE: Nie pozwól usunąć ról systemowych
+        if (in_array($id, [1, 2, 3])) {
+             die("Nie można usunąć wbudowanych ról systemowych.");
+        }
+
+        try {
+            $pdo->prepare("DELETE FROM roles WHERE id = :id")->execute([':id' => $id]);
+            header('Location: ' . $base_path . '/admin/roles');
+        } catch (PDOException $e) { 
+            die("Nie można usunąć tej roli, bo są do niej przypisani użytkownicy."); 
+        }
+        break;
+
+
     // --- STATUSY ---
     case '/admin/statuses':
         if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
