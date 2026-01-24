@@ -20,9 +20,11 @@
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/helpdesk/admin/users">Użytkownicy</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><h6 class="dropdown-header">Słowniki</h6></li>
+                       <li><h6 class="dropdown-header">Ustawienia</h6></li>
                         <li><a class="dropdown-item" href="/helpdesk/admin/categories">Kategorie</a></li>
-                        <li><a class="dropdown-item" href="#">Statusy (Wkrótce)</a></li>
+                        <li><a class="dropdown-item" href="/helpdesk/admin/statuses">Statusy</a></li>
+                        <li><a class="dropdown-item" href="/helpdesk/admin/priorities">Priorytety</a></li>
+                        <li><a class="dropdown-item" href="/helpdesk/admin/departments">Departamenty</a></li>
                     </ul>
                 </li>
                 <?php endif; ?>

@@ -522,56 +522,177 @@ switch ($path) {
         }
         break;
 
-    case '/admin/categories':
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') {
-            die("Brak dostępu.");
-        }
+    // =========================================================
+    // PEŁNY MODUŁ SŁOWNIKÓW (CRUD: Statusy, Departamenty, Priorytety, Kategorie)
+    // =========================================================
 
+    // --- STATUSY ---
+    case '/admin/statuses':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
         require __DIR__ . '/../config/database.php';
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = $_POST['name'];
-            if (!empty($name)) {
-                $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (:name)");
-                $stmt->execute([':name' => $name]);
-                header('Location: ' . $base_path . '/admin/categories');
-                exit;
-            }
+            $stmt = $pdo->prepare("INSERT INTO statuses (name) VALUES (:name)");
+            $stmt->execute([':name' => $_POST['name']]);
+            header('Location: ' . $base_path . '/admin/statuses'); exit;
         }
+        $items = $pdo->query("SELECT * FROM statuses ORDER BY id ASC")->fetchAll();
+        $dictionary_name = "Statusy";
+        $base_url = "/helpdesk/admin/statuses";
+        require __DIR__ . '/../src/View/admin_dictionary_template.php';
+        break;
 
-        $stmt = $pdo->query("SELECT * FROM categories ORDER BY id ASC");
-        $categories = $stmt->fetchAll();
+    case '/admin/statuses/edit':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("UPDATE statuses SET name = :name WHERE id = :id");
+            $stmt->execute([':name' => $_POST['name'], ':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/statuses'); exit;
+        }
+        $item = $pdo->prepare("SELECT * FROM statuses WHERE id = :id");
+        $item->execute([':id' => $_GET['id']]);
+        $item = $item->fetch();
+        $dictionary_name = "Statusy";
+        $update_action = "/helpdesk/admin/statuses/edit";
+        $back_link = "/helpdesk/admin/statuses";
+        require __DIR__ . '/../src/View/admin_dictionary_edit.php';
+        break;
 
-        require __DIR__ . '/../src/View/admin_categories.php';
+    case '/admin/statuses/delete':
+        require __DIR__ . '/../config/database.php';
+        if ($_SESSION['role'] !== 'ADMIN') die('Brak uprawnień');
+        // Zabezpieczenie podstawowych statusów
+        if (in_array($_POST['id'], [1, 2, 3])) die("Nie można usunąć statusów systemowych.");
+        try {
+            $pdo->prepare("DELETE FROM statuses WHERE id = :id")->execute([':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/statuses');
+        } catch (PDOException $e) { die("Element używany."); }
         break;
 
 
-    case '/admin/categories/delete':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $_SESSION['role'] !== 'ADMIN') {
-            header('Location: ' . $base_path . '/dashboard');
-            exit;
-        }
-
+    // --- DEPARTAMENTY ---
+    case '/admin/departments':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
         require __DIR__ . '/../config/database.php';
-        $id = $_POST['id'];
-
-        try {
-            $stmt = $pdo->prepare("DELETE FROM categories WHERE id = :id");
-            $stmt->execute([':id' => $id]);
-            header('Location: ' . $base_path . '/admin/categories');
-            exit;
-        } catch (PDOException $e) {
-        // Kod 23000 = Naruszenie więzów integralności (kategoria jest używana)
-            if ($e->getCode() == '23000') {
-                die("<div class='container mt-5'><div class='alert alert-danger text-center'>
-                            <h4>Nie można usunąć tej kategorii!</h4>
-                            <p>Jest ona przypisana do istniejących zgłoszeń.</p>
-                            <a href='$base_path/admin/categories' class='btn btn-secondary'>Wróć</a>
-                        </div></div>");
-            } else {
-                die("Błąd bazy danych: " . $e->getMessage());
-            }
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("INSERT INTO departments (name) VALUES (:name)");
+            $stmt->execute([':name' => $_POST['name']]);
+            header('Location: ' . $base_path . '/admin/departments'); exit;
         }
+        $items = $pdo->query("SELECT * FROM departments ORDER BY id ASC")->fetchAll();
+        $dictionary_name = "Departamenty";
+        $base_url = "/helpdesk/admin/departments";
+        require __DIR__ . '/../src/View/admin_dictionary_template.php';
+        break;
+
+    case '/admin/departments/edit':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("UPDATE departments SET name = :name WHERE id = :id");
+            $stmt->execute([':name' => $_POST['name'], ':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/departments'); exit;
+        }
+        $item = $pdo->prepare("SELECT * FROM departments WHERE id = :id");
+        $item->execute([':id' => $_GET['id']]);
+        $item = $item->fetch();
+        $dictionary_name = "Departamenty";
+        $update_action = "/helpdesk/admin/departments/edit";
+        $back_link = "/helpdesk/admin/departments";
+        require __DIR__ . '/../src/View/admin_dictionary_edit.php';
+        break;
+        
+    case '/admin/departments/delete':
+        require __DIR__ . '/../config/database.php';
+        if ($_SESSION['role'] !== 'ADMIN') die('Brak uprawnień');
+        try {
+            $pdo->prepare("DELETE FROM departments WHERE id = :id")->execute([':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/departments');
+        } catch (PDOException $e) { die("Element używany."); }
+        break;
+
+
+    // --- PRIORYTETY ---
+    case '/admin/priorities':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("INSERT INTO priorities (name) VALUES (:name)");
+            $stmt->execute([':name' => $_POST['name']]);
+            header('Location: ' . $base_path . '/admin/priorities'); exit;
+        }
+        $items = $pdo->query("SELECT * FROM priorities ORDER BY id ASC")->fetchAll();
+        $dictionary_name = "Priorytety";
+        $base_url = "/helpdesk/admin/priorities";
+        require __DIR__ . '/../src/View/admin_dictionary_template.php';
+        break;
+
+    case '/admin/priorities/edit':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("UPDATE priorities SET name = :name WHERE id = :id");
+            $stmt->execute([':name' => $_POST['name'], ':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/priorities'); exit;
+        }
+        $item = $pdo->prepare("SELECT * FROM priorities WHERE id = :id");
+        $item->execute([':id' => $_GET['id']]);
+        $item = $item->fetch();
+        $dictionary_name = "Priorytety";
+        $update_action = "/helpdesk/admin/priorities/edit";
+        $back_link = "/helpdesk/admin/priorities";
+        require __DIR__ . '/../src/View/admin_dictionary_edit.php';
+        break;
+
+    case '/admin/priorities/delete':
+        require __DIR__ . '/../config/database.php';
+        if ($_SESSION['role'] !== 'ADMIN') die('Brak uprawnień');
+        try {
+            $pdo->prepare("DELETE FROM priorities WHERE id = :id")->execute([':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/priorities');
+        } catch (PDOException $e) { die("Element używany."); }
+        break;
+
+
+    // --- KATEGORIE ---
+    case '/admin/categories':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (:name)");
+            $stmt->execute([':name' => $_POST['name']]);
+            header('Location: ' . $base_path . '/admin/categories'); exit;
+        }
+        $items = $pdo->query("SELECT * FROM categories ORDER BY id ASC")->fetchAll();
+        $dictionary_name = "Kategorie";
+        $base_url = "/helpdesk/admin/categories";
+        require __DIR__ . '/../src/View/admin_dictionary_template.php';
+        break;
+
+    case '/admin/categories/edit':
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'ADMIN') { die("Brak dostępu."); }
+        require __DIR__ . '/../config/database.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $stmt = $pdo->prepare("UPDATE categories SET name = :name WHERE id = :id");
+            $stmt->execute([':name' => $_POST['name'], ':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/categories'); exit;
+        }
+        $item = $pdo->prepare("SELECT * FROM categories WHERE id = :id");
+        $item->execute([':id' => $_GET['id']]);
+        $item = $item->fetch();
+        $dictionary_name = "Kategorie";
+        $update_action = "/helpdesk/admin/categories/edit";
+        $back_link = "/helpdesk/admin/categories";
+        require __DIR__ . '/../src/View/admin_dictionary_edit.php';
+        break;
+
+    case '/admin/categories/delete':
+        require __DIR__ . '/../config/database.php';
+        if ($_SESSION['role'] !== 'ADMIN') die('Brak uprawnień');
+        try {
+            $pdo->prepare("DELETE FROM categories WHERE id = :id")->execute([':id' => $_POST['id']]);
+            header('Location: ' . $base_path . '/admin/categories');
+        } catch (PDOException $e) { die("Element używany."); }
         break;
 
 

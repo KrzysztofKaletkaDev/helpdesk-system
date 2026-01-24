@@ -2,36 +2,39 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Słowniki - Kategorie</title>
+    <title>Słownik: <?php echo htmlspecialchars($dictionary_name); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <?php require __DIR__ . '/header.php'; ?>
 
     <div class="container">
-        <h2 class="mb-4">Zarządzanie Kategoriami</h2>
+        <h2 class="mb-4">Zarządzanie: <?php echo htmlspecialchars($dictionary_name); ?></h2>
         
         <div class="row">
             <div class="col-md-8">
                 <div class="card shadow">
-                    <div class="card-header">Istniejące kategorie</div>
+                    <div class="card-header">Lista elementów</div>
                     <div class="card-body p-0">
                         <table class="table table-striped mb-0">
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Nazwa kategorii</th>
-                                    </tr>
+                                    <th>Nazwa</th>
+                                    <th>Akcja</th>
+                                </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($categories as $cat): ?>
+                                <?php foreach ($items as $item): ?>
                                 <tr>
-                                    <td><?php echo $cat['id']; ?></td>
-                                    <td><?php echo htmlspecialchars($cat['name']); ?></td>
+                                    <td><?php echo $item['id']; ?></td>
+                                    <td><?php echo htmlspecialchars($item['name']); ?></td>
                                     <td>
-                                        <form action="/helpdesk/admin/categories/delete" method="POST" 
+                                        <a href="<?php echo $base_url; ?>/edit?id=<?php echo $item['id']; ?>" class="btn btn-sm btn-primary me-1">Edytuj</a>
+                                        
+                                        <form action="<?php echo $base_url; ?>/delete" method="POST" 
                                             onsubmit="return confirm('Czy na pewno chcesz usunąć?');" style="display:inline;">
-                                            <input type="hidden" name="id" value="<?php echo $cat['id']; ?>">
+                                            <input type="hidden" name="id" value="<?php echo $item['id']; ?>">
                                             <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
                                         </form>
                                     </td>
@@ -45,12 +48,12 @@
 
             <div class="col-md-4">
                 <div class="card shadow bg-white">
-                    <div class="card-header bg-success text-white">Dodaj nową</div>
+                    <div class="card-header bg-success text-white">Dodaj nowy</div>
                     <div class="card-body">
-                        <form action="/helpdesk/admin/categories" method="POST">
+                        <form action="<?php echo $base_url; ?>" method="POST">
                             <div class="mb-3">
                                 <label class="form-label">Nazwa</label>
-                                <input type="text" name="name" class="form-control" placeholder="np. Awaria Sieci" required>
+                                <input type="text" name="name" class="form-control" required placeholder="np. Nowa wartość">
                             </div>
                             <button type="submit" class="btn btn-success w-100">Zapisz</button>
                         </form>
